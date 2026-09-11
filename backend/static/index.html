@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Limen — Autonomous Agent Workbench</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="workbench-root">
+    <!-- 36px Titlebar (h-9) -->
+    <header class="titlebar" id="app-titlebar">
+      <div class="titlebar-left">
+        <div class="app-brand" title="Limen Autonomous Agent Workbench">
+          <div class="brand-glyph">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16v4H4z"></path>
+              <path d="M4 10h7v10H4z"></path>
+              <path d="M15 10h5v10h-5z"></path>
+            </svg>
+          </div>
+          <span class="brand-title">Limen</span>
+        </div>
+        <div class="project-pill">
+          <span class="project-label">Project:</span>
+          <span class="project-name">Limen Core</span>
+        </div>
+      </div>
+
+      <!-- Center: Titlebar Session Tabs Strip -->
+      <div class="titlebar-tabs-container">
+        <div class="titlebar-tabs-strip" id="titlebar-tabs-strip" role="tablist" aria-label="Open Sessions">
+          <!-- Populated dynamically: [Session 1 ✕] [Session 2] -->
+        </div>
+        <button class="tab-btn-add" id="btn-new-tab" title="New Session (Ctrl+K)" aria-label="New Session">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+
+      <!-- Right: Model Pill & Diagnostics -->
+      <div class="titlebar-right">
+        <!-- Model Selector Dropdown -->
+        <div class="titlebar-model-select-wrap" title="Active Model">
+          <span class="model-bolt">⚡</span>
+          <select id="global-model-select" class="titlebar-model-select" aria-label="Active LLM Model"></select>
+        </div>
+
+        <!-- Connection Indicator Dot -->
+        <div class="engine-ping-pill" id="btn-titlebar-ping" title="Engine Gateway Status">
+          <span class="engine-dot checking" id="engine-status-dot"></span>
+          <span class="engine-label" id="engine-status-label">Checking</span>
+        </div>
+
+        <!-- Inspector Split Pane Toggle -->
+        <button class="titlebar-action-btn active" id="btn-toggle-inspector" title="Toggle Inspector Pane" aria-label="Toggle Inspector Pane">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>
+          <span>Inspector</span>
+        </button>
+
+        <!-- Settings Gear -->
+        <button class="titlebar-action-btn" id="btn-open-settings" title="Settings & Provider Config" aria-label="Settings">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace Container: Rail + Sidebar + Split Pane -->
+    <div class="workbench-body">
+      <!-- 44px Icon Rail -->
+      <nav class="workbench-rail" aria-label="Workbench views">
+        <div class="rail-top">
+          <button class="rail-btn active" id="rail-btn-sessions" title="Execution Runs & Sessions" aria-label="Sessions">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </button>
+          <button class="rail-btn" id="rail-btn-tools" title="Tool Registry" aria-label="Tools">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          </button>
+          <button class="rail-btn" id="rail-btn-telemetry" title="Event Telemetry" aria-label="Telemetry">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          </button>
+        </div>
+        <div class="rail-bottom">
+          <button class="rail-btn" id="rail-btn-settings" title="Engine Settings" aria-label="Settings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          </button>
+        </div>
+      </nav>
+
+      <!-- 240px Collapsible Sidebar -->
+      <aside class="workbench-sidebar" id="workbench-sidebar">
+        <div class="sidebar-top-row">
+          <span class="sidebar-title">Execution Runs</span>
+          <span class="sidebar-badge" id="session-count-badge">0</span>
+        </div>
+        <div class="sidebar-session-list" id="sidebar-session-list" role="listbox"></div>
+      </aside>
+
+      <!-- Split Workspace: Left = Stream & Composer, Right = Inspector & Artifacts -->
+      <div class="workspace-split" id="workspace-split">
+        <!-- Pane 1: Agent Stream & Anchored Composer -->
+        <section class="pane-stream" id="pane-stream">
+          <!-- Pane Sub-header: Current Session Metadata -->
+          <div class="pane-sub-header">
+            <div class="sub-header-left">
+              <span class="session-path-label">run /</span>
+              <span class="session-active-name" id="stream-session-title">Untitled Run</span>
+            </div>
+            <div class="sub-header-right">
+              <span class="run-status-chip idle" id="run-status-chip">
+                <span class="status-pulse-dot"></span>
+                <span id="run-status-label">Ready</span>
+              </span>
+              <span class="step-counter-chip" id="step-counter-chip">Step: 0</span>
+            </div>
+          </div>
+
+          <!-- Execution Event Timeline Stream Viewport -->
+          <div class="timeline-viewport" id="timeline-viewport">
+            <!-- Jump to Latest Activity Floating FAB -->
+            <button class="btn-jump-latest hidden" id="btn-jump-latest" title="Scroll to bottom">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              <span>Jump to latest</span>
+            </button>
+
+            <!-- Clean Industrial Idle State -->
+            <div class="idle-terminal-card" id="idle-terminal-card">
+              <div class="idle-glyph-wrap">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16v4H4z"></path>
+                  <path d="M4 10h7v10H4z"></path>
+                  <path d="M15 10h5v10h-5z"></path>
+                </svg>
+              </div>
+              <div class="idle-headline">Limen Decide-Act-Observe Harness</div>
+              <p class="idle-sub">Domain-neutral autonomous loop with strict tool grounding and live event streaming.</p>
+
+              <div class="prompt-templates-row">
+                <button class="template-chip" data-prompt="Look up unit_cost and item_count in the database, calculate the total valuation, and apply a 10% discount.">
+                  <span class="chip-tag">Arithmetic</span>
+                  <span class="chip-label">Multi-Step Inventory Valuation</span>
+                </button>
+                <button class="template-chip" data-prompt="Check the current stock_level against reorder_threshold. If reorder is needed, calculate order deficit and unit cost.">
+                  <span class="chip-tag">Branching</span>
+                  <span class="chip-label">Dynamic Threshold Verification</span>
+                </button>
+                <button class="template-chip" data-prompt="Look up secret_metric in the database. If retrieved, calculate double its value. Handle any missing keys or errors honestly.">
+                  <span class="chip-tag">Resilience</span>
+                  <span class="chip-label">Simulated Error Recovery</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Conversation & Step Execution List -->
+            <div class="execution-stream-list" id="execution-stream-list"></div>
+          </div>
+
+          <!-- Anchored Composer Control Surface (Section 15 Specification) -->
+          <div class="composer-dock">
+            <form class="composer-surface" id="composer-form">
+              <textarea
+                id="composer-input"
+                class="composer-textarea"
+                rows="1"
+                placeholder="Describe the task for Limen... (Enter to send, Shift+Enter for newline)"
+                autocomplete="off"
+                spellcheck="false"
+              ></textarea>
+
+              <div class="composer-control-bar">
+                <div class="control-bar-left">
+                  <div class="composer-pill">
+                    <span class="pill-icon">⚡</span>
+                    <span class="pill-text" id="composer-model-indicator">Loading model...</span>
+                  </div>
+                  <div class="composer-pill">
+                    <span class="pill-label">Max Steps:</span>
+                    <span class="pill-value" id="composer-steps-indicator">8</span>
+                  </div>
+                </div>
+
+                <div class="control-bar-right">
+                  <span class="keybinding-cue"><kbd>↵</kbd> send / <kbd>Shift+↵</kbd> newline</span>
+                  <button type="submit" class="btn-execute" id="btn-submit-task" title="Execute Task" aria-label="Execute">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    <span>Execute</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Pane 2: Right Inspector / Telemetry / Artifact Workbench (Section 16 Specification) -->
+        <aside class="pane-inspector" id="pane-inspector">
+          <div class="inspector-tabs-bar">
+            <div class="inspector-tabs">
+              <button class="inspector-tab active" data-tab="artifacts" id="tab-btn-artifacts">
+                <span>Structured Artifacts</span>
+                <span class="tab-count-pill" id="artifacts-count-pill">0</span>
+              </button>
+              <button class="inspector-tab" data-tab="tool_call" id="tab-btn-tool">
+                <span>Tool Inspector</span>
+              </button>
+              <button class="inspector-tab" data-tab="telemetry" id="tab-btn-telemetry">
+                <span>SSE Telemetry</span>
+              </button>
+            </div>
+            <button class="inspector-close-btn" id="btn-close-inspector" title="Close Inspector" aria-label="Close Inspector">✕</button>
+          </div>
+
+          <div class="inspector-viewport" id="inspector-viewport">
+            <!-- View 1: Structured Artifacts -->
+            <div class="inspector-view active" id="view-artifacts">
+              <div class="inspector-empty-state" id="empty-artifacts">
+                <span class="empty-icon">📊</span>
+                <span class="empty-text">No structured plan artifacts emitted yet.</span>
+                <span class="empty-hint">Emitted tables from tools or final plans will render here.</span>
+              </div>
+              <div class="artifacts-content-container hidden" id="artifacts-content-container"></div>
+            </div>
+
+            <!-- View 2: Tool Call Inspector -->
+            <div class="inspector-view" id="view-tool-call">
+              <div class="inspector-empty-state" id="empty-tool-inspector">
+                <span class="empty-icon">⚡</span>
+                <span class="empty-text">Select any tool call in the stream to inspect arguments and raw stdout.</span>
+              </div>
+              <div class="tool-inspection-details hidden" id="tool-inspection-details">
+                <div class="tool-meta-strip">
+                  <div class="meta-item">
+                    <span class="meta-label">Tool:</span>
+                    <span class="meta-val monospace" id="inspect-tool-name">-</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Status:</span>
+                    <span class="meta-val" id="inspect-tool-status">-</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">Step:</span>
+                    <span class="meta-val monospace" id="inspect-tool-step">-</span>
+                  </div>
+                </div>
+
+                <div class="code-block-wrap">
+                  <div class="code-block-header">
+                    <span>Arguments Payload</span>
+                    <button class="btn-copy-code" id="btn-copy-args">Copy</button>
+                  </div>
+                  <pre class="code-block-pre"><code id="inspect-tool-args">{}</code></pre>
+                </div>
+
+                <div class="code-block-wrap">
+                  <div class="code-block-header">
+                    <span>Execution Output</span>
+                    <button class="btn-copy-code" id="btn-copy-output">Copy</button>
+                  </div>
+                  <pre class="code-block-pre"><code id="inspect-tool-output">No output</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- View 3: Raw SSE Telemetry Log -->
+            <div class="inspector-view" id="view-telemetry">
+              <div class="telemetry-log-scroll" id="telemetry-log-scroll">
+                <div class="telemetry-empty" id="telemetry-empty">Waiting for SSE events...</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Dialog (Modal) -->
+  <div class="modal-overlay hidden" id="modal-settings" role="dialog" aria-modal="true" aria-labelledby="settings-dialog-title">
+    <div class="modal-dialog">
+      <div class="dialog-header">
+        <h2 id="settings-dialog-title" class="dialog-title">Engine Configuration</h2>
+        <button class="dialog-close" id="btn-close-settings" aria-label="Close">✕</button>
+      </div>
+
+      <div class="dialog-body">
+        <div class="form-group">
+          <label for="cfg-provider-url">Provider API Base URL</label>
+          <input type="text" id="cfg-provider-url" class="mono-input" placeholder="http://localhost:20128/v1">
+          <span class="input-hint">OpenAI-compatible chat completion provider.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-api-key">API Key</label>
+          <input type="password" id="cfg-api-key" class="mono-input" placeholder="sk-...">
+          <span class="input-hint">Authentication token for external or local gateway.</span>
+        </div>
+
+        <div class="form-group">
+          <label for="cfg-max-steps">Max Execution Steps</label>
+          <input type="number" id="cfg-max-steps" class="mono-input" min="1" max="30" value="8">
+          <span class="input-hint">Loop step guardrail limit.</span>
+        </div>
+
+        <div class="form-group">
+          <label>Configured Model Profiles</label>
+          <div class="models-tag-list" id="settings-models-tag-list"></div>
+          <div class="add-model-input-row">
+            <input type="text" id="input-add-model" class="mono-input" placeholder="e.g. antigravity/gemini-3.8-flash-tiered">
+            <button type="button" class="btn-subtle" id="btn-add-model">Add</button>
+          </div>
+        </div>
+
+        <div class="diagnostic-box">
+          <div class="diagnostic-header">
+            <span>Provider Gateway Diagnostic</span>
+            <button type="button" class="btn-subtle btn-xs" id="btn-ping-gateway">Test Connection</button>
+          </div>
+          <pre class="diagnostic-log" id="diagnostic-log">Click 'Test Connection' to ping gateway.</pre>
+        </div>
+      </div>
+
+      <div class="dialog-footer">
+        <button type="button" class="btn-subtle" id="btn-cancel-settings">Cancel</button>
+        <button type="button" class="btn-save" id="btn-save-settings">Save & Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

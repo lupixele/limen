@@ -1,0 +1,9 @@
+{
+  "provider_url": "http://localhost:20128/v1",
+  "api_key": "",
+  "active_model": "antigravity/gemini-3.8-flash-tiered",
+  "custom_models": [
+    "antigravity/gemini-3.8-flash-tiered"
+  ],
+  "default_target_folder": ""
+}
