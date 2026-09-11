@@ -32,6 +32,18 @@ venv.bak/
 # Local Sessions & Logs
 backend/.sessions/
 *.log
+backend/tourism.db*
+.hermes/*.jsonl
+.hermes/
+
+# Exclude agent prompts and handoffs
+Design/LIMEN_HERMES_PROMPT.md
+Design/LIMEN_OPENDESIGN_FINAL_PROMPT.md
+LIMEN_TOURISM_BUILD_HANDOFF*.md
+
+# Temporary test artifacts
+out.txt
+summary.txt
 
 # Sensitive Config
 backend/config.json

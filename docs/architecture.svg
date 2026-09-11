@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 650" width="1000" height="650" style="background:#121212; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <style>
+      .box { rx: 6px; ry: 6px; stroke-width: 1.5px; }
+      .title { font-weight: 600; font-size: 14px; fill: #ededed; }
+      .sub { font-size: 11px; fill: #8c8c93; }
+      .badge { font-size: 10px; font-weight: 600; fill: #121212; }
+      .arrow { stroke: #55555c; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
+      .arrow-active { stroke: #10b981; stroke-width: 1.5; fill: none; stroke-dasharray: 4; animation: dash 1s linear infinite; marker-end: url(#arrowhead-green); }
+    </style>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#55555c" />
+    </marker>
+    <marker id="arrowhead-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#10b981" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="30" y="40" fill="#ffffff" font-size="20" font-weight="700">Limen Tourism Management Agent — Architecture</text>
+  <text x="30" y="60" fill="#8c8c93" font-size="12">Decide-Act-Observe Autonomous Runtime with Cloudflare Quick Tunnel &amp; Live Monitoring</text>
+
+  <!-- Section: Client & Network -->
+  <rect x="30" y="90" width="220" height="520" rx="8" fill="#171717" stroke="#262626" />
+  <text x="45" y="115" fill="#a1a1aa" font-size="12" font-weight="600">CLIENT &amp; EDGE NETWORK</text>
+
+  <!-- User Browser -->
+  <g transform="translate(45, 135)">
+    <rect width="190" height="90" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="15" y="28" class="title">User Browser</text>
+    <text x="15" y="48" class="sub">• Precision Monolith UI (#121212)</text>
+    <text x="15" y="64" class="sub">• 4-Tier Tool Disclosure Stack</text>
+    <text x="15" y="80" class="sub">• Scenario &amp; Monitor Controls</text>
+  </g>
+
+  <!-- Cloudflare Tunnel -->
+  <g transform="translate(45, 275)">
+    <rect width="190" height="80" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="15" y="28" class="title">Cloudflare Quick Tunnel</text>
+    <text x="15" y="48" class="sub">• Zero-Trust Public Edge</text>
+    <text x="15" y="64" class="sub">• Encrypted HTTPS Endpoint</text>
+  </g>
+
+  <!-- Localhost Dev Interface -->
+  <g transform="translate(45, 400)">
+    <rect width="190" height="70" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="15" y="26" class="title">Local Client (127.0.0.1)</text>
+    <text x="15" y="46" class="sub">• Direct developer port 8000</text>
+    <text x="15" y="60" class="sub">• Playwright / browser testing</text>
+  </g>
+
+  <!-- Section: Backend Application -->
+  <rect x="280" y="90" width="410" height="520" rx="8" fill="#171717" stroke="#262626" />
+  <text x="295" y="115" fill="#a1a1aa" font-size="12" font-weight="600">FASTAPI SERVER &amp; AGENT HARNESS (PORT 8000)</text>
+
+  <!-- FastAPI Server -->
+  <g transform="translate(295, 135)">
+    <rect width="380" height="100" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="15" y="28" class="title">FastAPI Backend (app.py)</text>
+    <text x="15" y="48" class="sub">• REST Endpoints: /api/config, /api/sessions, /api/tourism/*</text>
+    <text x="15" y="66" class="sub">• SSE Stream Router: /api/agent/stream</text>
+    <text x="15" y="84" class="sub">• Autonomous Monitoring Stream: /api/tourism/monitor/stream</text>
+  </g>
+
+  <!-- Agent Loop -->
+  <g transform="translate(295, 255)">
+    <rect width="380" height="110" class="box" fill="#242428" stroke="#3f3f46" />
+    <text x="15" y="26" class="title" fill="#ffffff">Decide-Act-Observe Loop (agent/loop.py)</text>
+    <text x="15" y="46" class="sub">• Dynamic Function-Calling Loop (tool_choice="auto")</text>
+    <text x="15" y="64" class="sub">• Multi-Turn Context &amp; Memory Accumulator</text>
+    <text x="15" y="82" class="sub">• Error Recovery &amp; Output Guardrail Step Capping</text>
+    <text x="15" y="100" class="sub">• SSE Dispatcher: tool_call, plan_artifact, final_answer</text>
+  </g>
+
+  <!-- Autonomous Monitor Engine -->
+  <g transform="translate(295, 385)">
+    <rect width="380" height="95" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="15" y="26" class="title">Autonomous Monitor Engine (tourism/monitor.py)</text>
+    <text x="15" y="46" class="sub">• Background Disruption Detector &amp; Periodic Health Checks</text>
+    <text x="15" y="64" class="sub">• Change Detection Feed (Disrupted Itinerary &amp; Crowd Spikes)</text>
+    <text x="15" y="82" class="sub">• Automatic Agent Loop Replan &amp; Versioned Itinerary Storage</text>
+  </g>
+
+  <!-- Session & SQLite Store -->
+  <g transform="translate(295, 500)">
+    <rect width="380" height="90" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="15" y="24" class="title">Durable Persistence Layer</text>
+    <text x="15" y="44" class="sub">• SQLite Database (backend/tourism.db): Destinations, Places, History</text>
+    <text x="15" y="62" class="sub">• Session Store (.sessions/*.json): Turns, preferences, itineraries</text>
+    <text x="15" y="80" class="sub">• Versioned Revisions (itineraries table, v1, v2 replans)</text>
+  </g>
+
+  <!-- Section: External Models & Data APIs -->
+  <rect x="720" y="90" width="250" height="520" rx="8" fill="#171717" stroke="#262626" />
+  <text x="735" y="115" fill="#a1a1aa" font-size="12" font-weight="600">INFERENCE &amp; DATA SERVICES</text>
+
+  <!-- Model Inference Gateway -->
+  <g transform="translate(735, 135)">
+    <rect width="220" height="85" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="12" y="26" class="title">LLM Gateway (OmniRoute)</text>
+    <text x="12" y="46" class="sub">• http://localhost:20128/v1</text>
+    <text x="12" y="62" class="sub">• antigravity/gemini-3.8-flash-tiered</text>
+    <text x="12" y="78" class="sub">• Function Calling &amp; Streaming</text>
+  </g>
+
+  <!-- External Live Weather -->
+  <g transform="translate(735, 240)">
+    <rect width="220" height="80" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="12" y="26" class="title">Live Weather: Open-Meteo</text>
+    <text x="12" y="46" class="sub">• Free Public REST Endpoint</text>
+    <text x="12" y="62" class="sub">• Visakhapatnam Real-Time Temp</text>
+    <text x="12" y="76" class="sub">• Precipitation &amp; Wind Speed</text>
+  </g>
+
+  <!-- External Live Routing -->
+  <g transform="translate(735, 340)">
+    <rect width="220" height="80" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="12" y="26" class="title">Live Routing: OSRM Public</text>
+    <text x="12" y="46" class="sub">• router.project-osrm.org</text>
+    <text x="12" y="62" class="sub">• Driving Mode Road Distances</text>
+    <text x="12" y="76" class="sub">• Haversine Fallback on 502/Timeout</text>
+  </g>
+
+  <!-- Simulated Feeds -->
+  <g transform="translate(735, 440)">
+    <rect width="220" height="150" class="box" fill="#1e1e20" stroke="#333336" />
+    <text x="12" y="26" class="title">Operational Feeds (SQLite)</text>
+    <text x="12" y="46" class="sub" fill="#eab308">Explicitly Labelled Simulation:</text>
+    <text x="12" y="66" class="sub">• Attraction Schedules &amp; Feeds</text>
+    <text x="12" y="84" class="sub">• Hotel Room Inventory per Night</text>
+    <text x="12" y="102" class="sub">• Visitor Crowd History &amp; Sensors</text>
+    <text x="12" y="120" class="sub">• Municipal Incident Records</text>
+    <text x="12" y="138" class="sub">• Finite Police/Medic/Bus Roster</text>
+  </g>
+
+  <!-- Connecting Lines -->
+  <!-- Browser to Tunnel -->
+  <path d="M 140 225 L 140 275" class="arrow" />
+  <!-- Tunnel to FastAPI -->
+  <path d="M 235 315 L 295 185" class="arrow" />
+  <!-- FastAPI to Agent Loop -->
+  <path d="M 485 235 L 485 255" class="arrow" />
+  <!-- Agent Loop to Model -->
+  <path d="M 675 310 L 735 177" class="arrow" />
+  <!-- Agent Loop to Persistence -->
+  <path d="M 485 365 L 485 500" class="arrow" />
+  <!-- Agent Loop to Tools / Adapters -->
+  <path d="M 675 330 L 735 280" class="arrow" />
+  <path d="M 675 340 L 735 380" class="arrow" />
+  <path d="M 675 350 L 735 490" class="arrow" />
+  <!-- Monitor to SQLite -->
+  <path d="M 380 480 L 380 500" class="arrow" />
+  <!-- Monitor to Agent Loop -->
+  <path d="M 520 385 L 520 365" class="arrow" />
+
+</svg>

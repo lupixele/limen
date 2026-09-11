@@ -26,7 +26,9 @@
     userScrolledUp: false,
     artifacts: [], // collected plan_artifacts in current session
     selectedToolForInspect: null,
-    telemetryLogs: []
+    telemetryLogs: [],
+    isMonitoring: false,
+    monitoringEventSource: null
   };
 
   // DOM Elements Cache
@@ -107,7 +109,19 @@
     diagnosticLog: document.getElementById('diagnostic-log'),
 
     // Toast
-    toastStack: document.getElementById('toast-stack')
+    toastStack: document.getElementById('toast-stack'),
+
+    // Destination Context & Scenario Controls
+    destCity: document.getElementById('dest-city'),
+    destTime: document.getElementById('dest-time'),
+    destWeather: document.getElementById('dest-weather'),
+    destWeatherSub: document.getElementById('dest-weather-sub'),
+    destDisruptions: document.getElementById('dest-disruptions'),
+    btnTriggerClosure: document.getElementById('btn-trigger-closure'),
+    btnResetScenario: document.getElementById('btn-reset-scenario'),
+    btnToggleMonitor: document.getElementById('btn-toggle-monitor'),
+    monitorDot: document.getElementById('monitor-dot'),
+    monitorLabel: document.getElementById('monitor-label')
   };
 
   // ---------------------------------------------------------------------------
@@ -487,6 +501,10 @@
   }
 
   async function loadSession(sessionId) {
+    if (state.isMonitoring && sessionId !== state.activeSessionId) {
+      showToast('Stop monitoring before switching sessions', 'info');
+      return;
+    }
     if (state.isStreaming) {
       showToast('Agent is currently running', 'error');
       return;
@@ -535,6 +553,10 @@
   }
 
   function startNewSession() {
+    if (state.isMonitoring) {
+      showToast('Stop monitoring before starting another session', 'info');
+      return;
+    }
     if (state.isStreaming) {
       showToast('Wait for run to complete', 'error');
       return;
@@ -692,15 +714,24 @@
       const toolStack = document.createElement('div');
       toolStack.className = 'tool-disclosure-stack';
       turnData.tools.forEach((t, idx) => {
-        const card = createToolRowElement(t.step || (idx + 1), t.tool_name || 'tool', t.status || 'success', t.args || {}, t.result_summary || '');
+        const card = createToolRowElement(t.step || (idx + 1), t.tool_name || 'tool', t.status || 'success', t.args || {}, t.result_summary || '', t.output);
         toolStack.appendChild(card);
       });
       block.appendChild(toolStack);
     }
 
     // Plan artifact table
-    if (turnData.plan_artifact && turnData.plan_artifact.columns && turnData.plan_artifact.rows) {
-      addArtifactToInspector(turnData.plan_artifact.columns, turnData.plan_artifact.rows);
+    const savedArtifacts = turnData.artifacts || (turnData.plan_artifact ? [turnData.plan_artifact] : []);
+    savedArtifacts.forEach(artifact => {
+      if (Array.isArray(artifact.columns) && Array.isArray(artifact.rows)) {
+        addArtifactToInspector(artifact.columns, artifact.rows, artifact.title);
+      }
+    });
+    if (turnData.converged === false) {
+      const banner = document.createElement('div');
+      banner.className = 'terminal-state-banner interrupted';
+      banner.textContent = `Incomplete run — ${turnData.terminal_status || 'no successful completion recorded'}`;
+      block.appendChild(banner);
     }
 
     // Final prose
@@ -717,7 +748,7 @@
   // ---------------------------------------------------------------------------
   // 4-Tier Progressive Tool Row Component (Section 14 Specification)
   // ---------------------------------------------------------------------------
-  function createToolRowElement(step, toolName, status, args, summary) {
+  function createToolRowElement(step, toolName, status, args, summary, output) {
     const card = document.createElement('div');
     card.className = `tool-row-card ${status}`;
 
@@ -771,13 +802,13 @@
     // Inspect button opens right-hand inspector pane
     card.querySelector('.btn-open-inspector-link').addEventListener('click', (e) => {
       e.stopPropagation();
-      openToolInInspector(step, toolName, status, args, summary);
+      openToolInInspector(step, toolName, status, args, output === undefined ? summary : JSON.stringify(output, null, 2));
     });
 
     return card;
   }
 
-  function updateToolRowElement(card, step, toolName, status, args, summary) {
+  function updateToolRowElement(card, step, toolName, status, args, summary, output) {
     card.className = `tool-row-card ${status}`;
 
     const argsCompact = typeof args === 'object' ? JSON.stringify(args).slice(0, 65) : String(args);
@@ -824,7 +855,7 @@
 
     card.querySelector('.btn-open-inspector-link').addEventListener('click', (e) => {
       e.stopPropagation();
-      openToolInInspector(step, toolName, status, args, summary);
+      openToolInInspector(step, toolName, status, args, output === undefined ? summary : JSON.stringify(output, null, 2));
     });
   }
 
@@ -853,8 +884,8 @@
     state.selectedToolForInspect = { step, toolName, status, args: argsText, output: summary };
   }
 
-  function addArtifactToInspector(columns, rows) {
-    state.artifacts.push({ columns, rows, timestamp: Date.now() / 1000 });
+  function addArtifactToInspector(columns, rows, title) {
+    state.artifacts.push({ columns, rows, title, timestamp: Date.now() / 1000 });
     updateArtifactsInspector();
     // Auto switch to artifacts tab if pane is visible
     switchInspectorTab('artifacts');
@@ -879,7 +910,7 @@
 
       let tableHtml = `
         <div class="artifact-block-header">
-          <span class="artifact-block-title">Artifact #${idx + 1} (${art.rows.length} rows)</span>
+          <span class="artifact-block-title">${escapeHtml(art.title || `Artifact #${idx + 1}`)} (${art.rows.length} rows)</span>
           <span class="monospace" style="color: var(--text-muted); font-size: 10px;">${art.columns.length} columns</span>
         </div>
         <div class="artifact-table-scroll">
@@ -986,7 +1017,8 @@
         body: JSON.stringify({
           instruction: instruction.trim(),
           session_id: state.activeSessionId || null,
-          model: modelToUse
+          model: modelToUse,
+          data_mode: document.getElementById('data-mode').value
         }),
         signal: state.abortController.signal
       });
@@ -1050,6 +1082,10 @@
     if (ev.step) updateStepCounter(ev.step);
 
     switch (ev.type) {
+      case 'activity': {
+        stream.statusLabel.textContent = ev.content || ev.message || 'Checking observations';
+        break;
+      }
       case 'tool_call': {
         stream.toolStack.classList.remove('hidden');
         const step = ev.step || 1;
@@ -1058,7 +1094,7 @@
         const args = ev.args || {};
         const summary = ev.result_summary || '';
 
-        const key = `${step}_${toolName}`;
+        const key = ev.invocation_id || `${ev.run_id || ''}_${step}_${toolName}`;
         if (status === 'running') {
           stream.statusLabel.innerText = `Step ${step}: running ${toolName}...`;
           setRunState('running', `Step ${step}: ${toolName}...`);
@@ -1069,9 +1105,9 @@
         } else {
           const existingCard = stream.toolInvocations.get(key);
           if (existingCard) {
-            updateToolRowElement(existingCard, step, toolName, status, args, summary);
+            updateToolRowElement(existingCard, step, toolName, status, args, summary, ev.output);
           } else {
-            const card = createToolRowElement(step, toolName, status, args, summary);
+            const card = createToolRowElement(step, toolName, status, args, summary, ev.output);
             stream.toolStack.appendChild(card);
           }
           stream.statusLabel.innerText = `Step ${step}: observed ${toolName}`;
@@ -1090,7 +1126,7 @@
 
       case 'plan_artifact': {
         if (ev.columns && ev.rows) {
-          addArtifactToInspector(ev.columns, ev.rows);
+          addArtifactToInspector(ev.columns, ev.rows, ev.title);
         }
         break;
       }
@@ -1308,6 +1344,193 @@
   });
 
   // ---------------------------------------------------------------------------
+  // Destination Context, Scenarios, and Autonomous Monitoring (Section 13)
+  // ---------------------------------------------------------------------------
+  async function loadTourismContext() {
+    try {
+      const mode = document.getElementById('data-mode').value;
+      const res = await fetch(`/api/tourism/context?session_id=${encodeURIComponent(state.activeSessionId || '')}&data_mode=${encodeURIComponent(mode)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (el.destCity) el.destCity.innerText = data.city || 'Visakhapatnam';
+      if (el.destTime) el.destTime.innerText = data.local_datetime || 'Asia/Kolkata';
+      if (el.destWeather) {
+        const temp = Number.isFinite(data.weather?.temperature_c) ? Math.round(data.weather.temperature_c) : '--';
+        el.destWeather.innerText = `${temp}°C`;
+      }
+      if (el.destWeatherSub) {
+        el.destWeatherSub.innerText = data.weather?.provenance?.source_type || (Number.isFinite(data.weather?.temperature_c) ? 'See source details' : 'Unavailable');
+      }
+      if (el.destDisruptions) {
+        const dis = data.active_disruptions || 0;
+        const closures = data.emergency_closed_places || 0;
+        el.destDisruptions.innerText = `${dis} Alert${dis === 1 ? '' : 's'}${closures > 0 ? ` (${closures} Closed)` : ''}`;
+        el.destDisruptions.style.color = (dis > 0 || closures > 0) ? 'var(--accent-warning-text, #f59e0b)' : 'inherit';
+      }
+    } catch (e) {
+      console.warn('Failed to load tourism context:', e);
+    }
+  }
+
+  async function triggerScenarioClosure() {
+    try {
+      const res = await fetch('/api/tourism/trigger-scenario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: state.activeSessionId || null,
+          attraction_id: 'ins_kursura',
+          reason: 'Emergency electrical maintenance on submarine dehumidification system'
+        })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+      if (res.ok) {
+        showToast('SIMULATED closure & crowd feed change applied', 'warning');
+        await loadTourismContext();
+      }
+    } catch (err) {
+      showToast(`Trigger failed: ${err.message}`, 'error');
+    }
+  }
+
+  async function resetScenarioData() {
+    try {
+      const res = await fetch('/api/tourism/reset', { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+      if (res.ok) {
+        showToast('Tourism scenario reset to deterministic baseline', 'success');
+        await loadTourismContext();
+      }
+    } catch (err) {
+      showToast(`Reset failed: ${err.message}`, 'error');
+    }
+  }
+
+  async function toggleMonitoring() {
+    if (!state.activeSessionId) {
+      showToast('Create and save an itinerary in a session first', 'error');
+      return;
+    }
+    if (state.isMonitoring) {
+      // Stop monitoring
+      try {
+        const sessId = state.activeSessionId || 'sess_default';
+        const response = await fetch(`/api/tourism/monitor/stop?session_id=${encodeURIComponent(sessId)}`, { method: 'POST' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      } catch (e) {
+        showToast(`Stop not confirmed: ${e.message}`, 'error');
+        return;
+      }
+
+      if (state.monitoringEventSource) {
+        state.monitoringEventSource.close();
+        state.monitoringEventSource = null;
+      }
+      state.isMonitoring = false;
+      if (el.btnToggleMonitor) {
+        el.btnToggleMonitor.classList.remove('active');
+        el.monitorLabel.innerText = 'Start Monitor';
+      }
+      showToast('Autonomous monitoring stopped', 'info');
+    } else {
+      // Start monitoring
+      const sessId = state.activeSessionId || 'sess_default';
+      try {
+        const startRes = await fetch('/api/tourism/monitor/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ session_id: sessId, interval_seconds: 3.0, max_ticks: 60, data_mode: document.getElementById('data-mode').value })
+        });
+        if (!startRes.ok) throw new Error(`HTTP ${startRes.status}`);
+
+        state.isMonitoring = true;
+        if (el.btnToggleMonitor) {
+          el.btnToggleMonitor.classList.add('active');
+          el.monitorLabel.innerText = 'Stop Monitor';
+        }
+        showToast('Autonomous monitoring active (3s interval)', 'success');
+
+        // Connect SSE stream for monitor
+        const sse = new EventSource(`/api/tourism/monitor/stream?session_id=${encodeURIComponent(sessId)}`);
+        state.monitoringEventSource = sse;
+        const monitorRuns = new Map();
+
+        sse.onmessage = (msgEvent) => {
+          try {
+            const ev = JSON.parse(msgEvent.data);
+            if (state.activeSessionId !== sessId) return;
+            if (ev.session_id && ev.session_id !== sessId) return;
+            logTelemetryEvent(ev);
+            if (['tool_call', 'plan_artifact', 'final_answer', 'done', 'error', 'activity'].includes(ev.type)) {
+              const runKey = ev.run_id || 'monitor';
+              if (!monitorRuns.has(runKey)) monitorRuns.set(runKey, createStreamingTurnDOM());
+              const monitorTurn = monitorRuns.get(runKey);
+              handleAgentEvent(ev, monitorTurn);
+              if (ev.type === 'done') {
+                monitorTurn.root.classList.remove('streaming');
+                loadSessionsSidebarOnly();
+              }
+            }
+
+            if (ev.type === 'monitoring_alert') {
+              showToast(`Alert: Disrupted stop detected!`, 'error');
+            } else if (ev.type === 'autonomous_replan') {
+              showToast(`Autonomous Replan: Substituted disrupted stops!`, 'success');
+              if (ev.artifact && ev.artifact.columns && ev.artifact.rows) {
+                addArtifactToInspector(ev.artifact.columns, ev.artifact.rows);
+              }
+              // Also render notice in active stream if present
+              const notice = document.createElement('div');
+              notice.className = 'terminal-state-banner converged';
+              notice.innerHTML = `
+                <span>✓ Autonomous Replan Triggered</span>
+                <span class="monospace" style="font-size: 10px;">${escapeHtml(ev.reason || '')}</span>
+              `;
+              el.executionStreamList.appendChild(notice);
+              scrollToBottom(true);
+              loadTourismContext();
+            } else if (ev.type === 'monitoring_stopped') {
+              state.isMonitoring = false;
+              if (el.btnToggleMonitor) {
+                el.btnToggleMonitor.classList.remove('active');
+                el.monitorLabel.innerText = 'Start Monitor';
+              }
+              sse.close();
+              state.monitoringEventSource = null;
+            }
+          } catch (pe) {
+            console.error('Monitoring event failed', pe);
+            showToast('Could not render monitoring update', 'error');
+          }
+        };
+
+        sse.onerror = () => {
+          showToast('Monitoring connection lost; backend stop is not confirmed', 'error');
+          sse.close();
+          state.monitoringEventSource = null;
+          state.isMonitoring = false;
+          if (el.btnToggleMonitor) {
+            el.btnToggleMonitor.classList.remove('active');
+            el.monitorLabel.innerText = 'Start Monitor';
+          }
+        };
+      } catch (err) {
+        showToast(`Failed to start monitoring: ${err.message}`, 'error');
+      }
+    }
+  }
+
+  if (el.btnTriggerClosure) el.btnTriggerClosure.addEventListener('click', triggerScenarioClosure);
+  if (el.btnResetScenario) el.btnResetScenario.addEventListener('click', resetScenarioData);
+  if (el.btnToggleMonitor) el.btnToggleMonitor.addEventListener('click', toggleMonitoring);
+  document.getElementById('data-mode').addEventListener('change', () => {
+    const live = document.getElementById('data-mode').value === 'live';
+    el.btnTriggerClosure.disabled = live;
+    el.btnResetScenario.disabled = live;
+    loadTourismContext();
+  });
+
+  // ---------------------------------------------------------------------------
   // Deterministic Fixtures Harness
   // ---------------------------------------------------------------------------
   window.limenFixtures = {
@@ -1446,6 +1669,9 @@
   async function init() {
     await loadConfig();
     await loadSessions();
+    await loadTourismContext();
+    // Periodic refresh of destination weather & disruption context
+    setInterval(loadTourismContext, 45000);
 
     const urlParams = new URLSearchParams(window.location.search);
     const fixture = urlParams.get('fixture');

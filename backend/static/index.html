@@ -23,7 +23,7 @@
         </div>
         <div class="project-pill">
           <span class="project-label">Project:</span>
-          <span class="project-name">Limen Core</span>
+          <span class="project-name">Limen Tourism</span>
         </div>
       </div>
 
@@ -114,6 +114,46 @@
             </div>
           </div>
 
+          <!-- Real-Time Destination Context & Scenario Control Strip -->
+          <div class="destination-context-strip" id="destination-context-strip">
+            <div class="context-strip-left">
+              <div class="context-item" title="Destination City & Timezone">
+                <span class="context-icon">📍</span>
+                <span class="context-val" id="dest-city">Visakhapatnam</span>
+                <span class="context-sub" id="dest-time">Asia/Kolkata</span>
+              </div>
+              <div class="context-item" title="Live Weather (Open-Meteo)">
+                <span class="context-icon">🌤</span>
+                <span class="context-val" id="dest-weather">--°C</span>
+                <span class="context-sub" id="dest-weather-sub">Checking source</span>
+              </div>
+              <div class="context-item" title="Active Disruptions & Closures">
+                <span class="context-icon">⚠️</span>
+                <span class="context-val" id="dest-disruptions">Checking alerts</span>
+              </div>
+            </div>
+            <div class="context-strip-right">
+              <label class="context-sub" for="data-mode">Data mode</label>
+              <select id="data-mode" aria-label="Tourism data mode" class="btn-scenario-action">
+                <option value="scenario" selected>Scenario — simulated feeds</option>
+                <option value="live">Live — unavailable feeds stay unknown</option>
+              </select>
+              <span class="context-sub">SIMULATION CONTROLS</span>
+              <button class="btn-scenario-action" id="btn-trigger-closure" title="Inject Submarine Museum emergency closure & crowd surge">
+                ⚡ Simulate Closure
+              </button>
+              <button class="btn-scenario-action" id="btn-reset-scenario" title="Reset scenario data to baseline">
+                ↺ Reset Data
+              </button>
+              <div class="monitor-control-wrap">
+                <button class="btn-scenario-action monitor" id="btn-toggle-monitor" title="Toggle autonomous background monitoring">
+                  <span class="monitor-dot" id="monitor-dot"></span>
+                  <span id="monitor-label">Start Monitor</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- Execution Event Timeline Stream Viewport -->
           <div class="timeline-viewport" id="timeline-viewport">
             <!-- Jump to Latest Activity Floating FAB -->
@@ -131,22 +171,62 @@
                   <path d="M15 10h5v10h-5z"></path>
                 </svg>
               </div>
-              <div class="idle-headline">Limen Decide-Act-Observe Harness</div>
-              <p class="idle-sub">Domain-neutral autonomous loop with strict tool grounding and live event streaming.</p>
+              <div class="idle-headline">Limen Tourism Intelligence &amp; Autonomous Agent</div>
+              <p class="idle-sub">Domain-grounded decide-act-observe harness with live weather, routing, crowd analytics, and autonomous replanning.</p>
 
-              <div class="prompt-templates-row">
-                <button class="template-chip" data-prompt="Look up unit_cost and item_count in the database, calculate the total valuation, and apply a 10% discount.">
-                  <span class="chip-tag">Arithmetic</span>
-                  <span class="chip-label">Multi-Step Inventory Valuation</span>
-                </button>
-                <button class="template-chip" data-prompt="Check the current stock_level against reorder_threshold. If reorder is needed, calculate order deficit and unit cost.">
-                  <span class="chip-tag">Branching</span>
-                  <span class="chip-label">Dynamic Threshold Verification</span>
-                </button>
-                <button class="template-chip" data-prompt="Look up secret_metric in the database. If retrieved, calculate double its value. Handle any missing keys or errors honestly.">
-                  <span class="chip-tag">Resilience</span>
-                  <span class="chip-label">Simulated Error Recovery</span>
-                </button>
+              <!-- Tourism Workflow Presets categorized by Role -->
+              <div class="workflow-presets-container">
+                <div class="workflow-category-title">Tourist &amp; Visitor Decision Intelligence</div>
+                <div class="prompt-templates-row">
+                  <button class="template-chip" data-prompt="Find open attractions in Visakhapatnam right now with moderate crowd density and admission under 100 INR.">
+                    <span class="chip-tag">1. Open Places</span>
+                    <span class="chip-label">Find Open &amp; Low-Density Spots</span>
+                  </button>
+                  <button class="template-chip" data-prompt="Build a feasible 1-day itinerary for Visakhapatnam starting at 10:00 AM with budget INR 2000, checking live weather and driving route travel times.">
+                    <span class="chip-tag">2. Feasible Day</span>
+                    <span class="chip-label">1-Day Itinerary with Routes</span>
+                  </button>
+                  <button class="template-chip" data-prompt="Calculate the fastest route from RK Beach to Kailasagiri by driving vs walking, and compare travel duration and distance.">
+                    <span class="chip-tag">3. Multimodal</span>
+                    <span class="chip-label">Compare Driving vs Walking Routes</span>
+                  </button>
+                  <button class="template-chip" data-prompt="Check all active disruptions affecting Visakhapatnam tourist sites and assess their impact on active itineraries.">
+                    <span class="chip-tag">4. Disruptions</span>
+                    <span class="chip-label">Check Closures &amp; Disruption Impact</span>
+                  </button>
+                  <button class="template-chip" data-prompt="Query 2-night accommodations in Visakhapatnam from 2026-09-12 to 2026-09-14 under INR 3500 per night and calculate total stay cost.">
+                    <span class="chip-tag">5. Stays</span>
+                    <span class="chip-label">Multi-Night Accommodation Search</span>
+                  </button>
+                </div>
+
+                <div class="workflow-category-title">Business, Crowd Analytics &amp; Events</div>
+                <div class="prompt-templates-row">
+                  <button class="template-chip" data-prompt="Find all dated local cultural and festival events scheduled in Visakhapatnam for September 2026.">
+                    <span class="chip-tag">6. Events</span>
+                    <span class="chip-label">Dated Festivals &amp; Cultural Events</span>
+                  </button>
+                  <button class="template-chip" data-prompt="Rank all attractions by both absolute headcount and percentage capacity density to identify peak bottlenecks.">
+                    <span class="chip-tag">7. Crowds</span>
+                    <span class="chip-label">Headcount vs Density Ranking</span>
+                  </button>
+                  <button class="template-chip" data-prompt="Project short-horizon crowd surge for INS Kursura Submarine Museum over the next 60 minutes based on sensor trends.">
+                    <span class="chip-tag">8. Surge</span>
+                    <span class="chip-label">Short-Horizon Surge Projection</span>
+                  </button>
+                </div>
+
+                <div class="workflow-category-title">Municipal Authorities &amp; Operations</div>
+                <div class="prompt-templates-row">
+                  <button class="template-chip" data-prompt="Recommend required staffing for RK Beach Promenade based on projected crowd headcounts and calculate additional staff needed beyond the active roster.">
+                    <span class="chip-tag">9. Staffing</span>
+                    <span class="chip-label">Staffing Headcount Deficit Calculation</span>
+                  </button>
+                  <button class="template-chip" data-prompt="Allocate finite municipal resources (shuttle buses, patrol officers, first aid) across crowded zones without over-allocating, and report unserved demand.">
+                    <span class="chip-tag">10. Resources</span>
+                    <span class="chip-label">Finite Municipal Resource Allocation</span>
+                  </button>
+                </div>
               </div>
             </div>
 
